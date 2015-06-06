@@ -212,8 +212,7 @@ class backuppc::server (
   $apache_require_ssl         = false,
   $backuppc_password          = '',
   $topdir                     = $backuppc::params::topdir
-) {
-  include backuppc::params
+) inherits backuppc::params {
 
   if empty($backuppc_password) {
     fail('Please provide a password for the backuppc user. This is used to login to the web based administration site.')
