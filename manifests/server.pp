@@ -346,6 +346,7 @@ class backuppc::server (
     group   => $backuppc::params::group_apache,
     mode    => '0644',
     require => Package[$backuppc::params::package],
+    ignore  => 'BackupPC.sock',
   }
 
   # Workaround for client exported resources that are
