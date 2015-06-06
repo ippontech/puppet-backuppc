@@ -345,6 +345,7 @@ class backuppc::server (
     owner   => 'backuppc',
     group   => $backuppc::params::group_apache,
     mode    => '0644',
+    require => Package[$backuppc::params::package],
   }
 
   # Workaround for client exported resources that are
