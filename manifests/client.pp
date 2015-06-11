@@ -330,23 +330,6 @@ class backuppc::client (
       $sudo_command_noexec = $backuppc::params::tar_path
     }
 
-    if $manage_sudo {
-      package { 'sudo':
-        ensure => installed,
-        before => File['/etc/sudoers.d/backuppc'],
-      }
-      file { '/etc/sudoers.d/':
-        ensure  => directory,
-        purge   => false,
-        require => Package['sudo'],
-      }
-      file_line { 'sudo_includedir':
-        ensure  => present,
-        path    => '/etc/sudoers',
-        line    => '#includedir /etc/sudoers.d',
-        require => Package['sudo'],
-      }
-    }
 
     if ! empty($system_additional_commands) {
       $additional_sudo_commands = join($system_additional_commands, ', ')
@@ -360,26 +343,21 @@ class backuppc::client (
       $sudo_commands_noexec = $sudo_command_noexec
     }
 
+
     if ! empty($sudo_commands) {
-      file { '/etc/sudoers.d/backuppc':
+      sudo::conf {'backuppc': 
         ensure  => $ensure,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0440',
         content => "${system_account} ALL=(ALL:ALL) NOPASSWD: ${sudo_commands}\n",
       }
     } else {
-      file { '/etc/sudoers.d/backuppc':
+      sudo::conf {'backuppc':
         ensure  => 'absent',
       }
     }
 
-    file { '/etc/sudoers.d/backuppc_noexec':
-      ensure  => $ensure,
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0440',
-      content => "${system_account} ALL=(ALL:ALL) NOEXEC:NOPASSWD: ${sudo_commands_noexec}\n",
+    sudo::conf  {'backuppc_noexec': 
+        ensure  => $ensure,
+        content => "${system_account} ALL=(ALL:ALL) NOEXEC:NOPASSWD: ${sudo_commands_noexec}\n",
     }
 
     user { $system_account:
