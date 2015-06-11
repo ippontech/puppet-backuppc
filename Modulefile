@@ -9,3 +9,4 @@ project_page 'https://github.com/wyrie/puppet-backuppc'
 
 ## Add dependencies, if any:
 dependency 'puppetlabs/stdlib', '>= 4.0.2'
+dependency 'saz/sudo', '>= 3.0.0'
