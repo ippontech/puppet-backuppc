@@ -185,6 +185,10 @@
 # to stop/start/browse/restore backups for this host. These users will not be
 # sent email about this host.
 #
+# [*host_ip*]
+# IP address used by backuppc to contact this hostname. `$enable_ip_collection` must
+# be enabled on the corresponding `backuppc::server` class in order to work properly
+#
 # === Examples
 #
 #  See tests folder.
@@ -253,6 +257,7 @@ class backuppc::client (
   $email_notify_old_backup_days = false,
   $hosts_file_dhcp       = 0,
   $hosts_file_more_users = '',
+  $host_ip               = $::ipaddress,
     ) {
   include backuppc::params
 
@@ -409,5 +414,11 @@ class backuppc::client (
     group   => $backuppc::params::group_apache,
     mode    => '0640',
     tag     => "backuppc_config_${backuppc_hostname}"
+  }
+
+  @@host { "${::fqdn}":
+      ensure => $ensure,
+      ip     => $host_ip,
+      tag    => "backuppc_hosts_${backuppc_hostname}"
   }
 }

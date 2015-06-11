@@ -163,6 +163,12 @@
 # [*topdir*]
 # Overwrite package default location for backuppc.
 #
+# [*enable_ip_collection*]
+# Boolean. If `true`, will collect each `backuppc::client` IP using the `host_ip` attribute and 
+# fill the corresponding line in `hosts` file. It can be useful when DNS is not reliable. Default to 
+# `false`
+#
+#
 # === Examples
 #
 #  See tests folder.
@@ -211,7 +217,8 @@ class backuppc::server (
   $apache_allow_from          = 'all',
   $apache_require_ssl         = false,
   $backuppc_password          = '',
-  $topdir                     = $backuppc::params::topdir
+  $topdir                     = $backuppc::params::topdir,
+  $enable_ip_collection       = false,
 ) inherits backuppc::params {
 
   if empty($backuppc_password) {
@@ -219,6 +226,7 @@ class backuppc::server (
   }
   validate_bool($service_enable)
   validate_bool($apache_require_ssl)
+  validate_bool($enable_ip_collection)
 
   validate_re($ensure, '^(present|absent)$',
   'ensure parameter must have a value of: present or absent')
@@ -423,6 +431,12 @@ class backuppc::server (
   }
   File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
     require => Package[$backuppc::params::package],
+  }
+
+  if $enable_ip_collection {
+      Host <<| tag == "backuppc_hosts_${::fqdn}" |>> {
+          comment => "backuppc host mapping"
+      }
   }
 
   # Ensure readable file permissions on
