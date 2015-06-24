@@ -12,6 +12,9 @@
 # [*ensure*]
 # Present or absent.
 #
+# [*backupp_identity*]
+# Target backuppc identity. Required.
+#
 # [*system_account*]
 # Name of the user that will be created to allow backuppc
 # access to the system via ssh. This only applies to xfer
@@ -199,7 +202,7 @@
 #
 class backuppc::client (
   $ensure                = 'present',
-  $backuppc_hostname     = '',
+  $backuppc_identity     = '',
   $system_account        = 'backup',
   $system_home_directory = '/var/backups',
   $system_additional_commands = [],
@@ -264,7 +267,7 @@ class backuppc::client (
   validate_re($ensure, '^(present|absent)$',
   'ensure parameter must have a value of: present or absent')
 
-  if empty($backuppc_hostname) {
+  if empty($backuppc_identity) {
     fail('Please provide the hostname of the node that hosts backuppc.')
   }
 
@@ -362,18 +365,18 @@ class backuppc::client (
       require => User[$system_account],
     }
 
-    Ssh_authorized_key <<| tag == "backuppc_${backuppc_hostname}" |>> {
+    Ssh_authorized_key <<| tag == "backuppc_${backuppc_identity}" |>> {
       user    => $system_account,
       require => File["${system_home_directory}/.ssh"]
     }
   }
 
-  if $::fqdn != $backuppc_hostname {
+  if $::fqdn != $backuppc_identity {
     @@sshkey { $::fqdn:
       ensure => $ensure,
       type   => 'ssh-rsa',
       key    => $::sshrsakey,
-      tag    => "backuppc_sshkeys_${backuppc_hostname}",
+      tag    => "backuppc_sshkeys_${backuppc_identity}",
     }
   }
 
@@ -382,7 +385,7 @@ class backuppc::client (
     path    => $backuppc::params::hosts,
     match   => "^${::fqdn}.*$",
     line    => "${::fqdn} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
-    tag     => "backuppc_hosts_${backuppc_hostname}",
+    tag     => "backuppc_hosts_${backuppc_identity}",
   }
 
   @@file { "${backuppc::params::config_directory}/pc/${::fqdn}.pl":
@@ -391,12 +394,12 @@ class backuppc::client (
     owner   => 'backuppc',
     group   => $backuppc::params::group_apache,
     mode    => '0640',
-    tag     => "backuppc_config_${backuppc_hostname}"
+    tag     => "backuppc_config_${backuppc_identity}"
   }
 
   @@host { "${::fqdn}":
       ensure => $ensure,
       ip     => $host_ip,
-      tag    => "backuppc_hosts_${backuppc_hostname}"
+      tag    => "backuppc_hosts_${backuppc_identity}"
   }
 }

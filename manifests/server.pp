@@ -7,6 +7,10 @@
 # [*ensure*]
 # Present or absent
 #
+# [*identity*]
+# Identifier for this backuppc::server. Used for 
+# ressources collection. Defaults to `$::fqdn`
+#
 # [*service_enable*]
 # Boolean. Will enable service at boot
 # and ensure a running service.
@@ -179,6 +183,7 @@
 #
 class backuppc::server (
   $ensure                     = 'present',
+  $identity                   = $::fqdn,
   $service_enable             = true,
   $wakeup_schedule            = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
   $max_backups                = 4,
@@ -419,22 +424,22 @@ class backuppc::server (
         'no-X11-forwarding',
       ],
       type    => 'ssh-rsa',
-      tag     => "backuppc_${::fqdn}",
+      tag     => "backuppc_${identity}",
     }
   }
 
   # Hosts
-  File <<| tag == "backuppc_config_${::fqdn}" |>> {
+  File <<| tag == "backuppc_config_${identity}" |>> {
     group   => $backuppc::params::group_apache,
     notify  => Service[$backuppc::params::service],
     require => File["${backuppc::params::config_directory}/pc"],
   }
-  File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
+  File_line <<| tag == "backuppc_hosts_${identity}" |>> {
     require => Package[$backuppc::params::package],
   }
 
   if $enable_ip_collection {
-      Host <<| tag == "backuppc_hosts_${::fqdn}" |>> {
+      Host <<| tag == "backuppc_hosts_${identity}" |>> {
           comment => "backuppc host mapping"
       }
   }
@@ -448,5 +453,5 @@ class backuppc::server (
     mode   => '0644',
   }
 
-  Sshkey <<| tag == "backuppc_sshkeys_${::fqdn}" |>>
+  Sshkey <<| tag == "backuppc_sshkeys_${identity}" |>>
 }
