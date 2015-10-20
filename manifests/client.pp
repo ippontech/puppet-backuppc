@@ -12,6 +12,9 @@
 # [*ensure*]
 # Present or absent.
 #
+# [*hostname*]
+# Name given to the backuppc::client. Defaults to $::fqdn
+#
 # [*backupp_identity*]
 # Target backuppc identity. Required.
 #
@@ -202,6 +205,7 @@
 #
 class backuppc::client (
   $ensure                = 'present',
+  $hostname              = $::fqdn,
   $backuppc_identity     = '',
   $system_account        = 'backup',
   $system_home_directory = '/var/backups',
@@ -372,7 +376,7 @@ class backuppc::client (
   }
 
   if $::fqdn != $backuppc_identity {
-    @@sshkey { $::fqdn:
+    @@sshkey { $hostname:
       ensure => $ensure,
       type   => 'ssh-rsa',
       key    => $::sshrsakey,
@@ -380,15 +384,15 @@ class backuppc::client (
     }
   }
 
-  @@file_line { "backuppc_host_${::fqdn}":
+  @@file_line { "backuppc_host_${hostname}":
     ensure  => $ensure,
     path    => $backuppc::params::hosts,
-    match   => "^${::fqdn}.*$",
-    line    => "${::fqdn} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
+    match   => "^${hostname}.*$",
+    line    => "${hostname} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
     tag     => "backuppc_hosts_${backuppc_identity}",
   }
 
-  @@file { "${backuppc::params::config_directory}/pc/${::fqdn}.pl":
+  @@file { "${backuppc::params::config_directory}/pc/${hostname}.pl":
     ensure  => $ensure,
     content => template("${module_name}/host.pl.erb"),
     owner   => 'backuppc',
@@ -397,7 +401,7 @@ class backuppc::client (
     tag     => "backuppc_config_${backuppc_identity}"
   }
 
-  @@host { "${::fqdn}":
+  @@host { "${hostname}":
       ensure => $ensure,
       ip     => $host_ip,
       tag    => "backuppc_hosts_${backuppc_identity}"
